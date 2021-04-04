@@ -46,6 +46,7 @@ export class TerminalViewPane extends ViewPane {
 	private _fontStyleElement: HTMLElement | undefined;
 	private _parentDomElement: HTMLElement | undefined;
 	private _terminalContainer: HTMLElement | undefined;
+	private _tabContainer: HTMLElement | undefined;
 	private _findWidget: TerminalFindWidget | undefined;
 	private _terminalsInitialized = false;
 	private _bodyDimensions: { width: number, height: number } = { width: 0, height: 0 };
@@ -89,20 +90,28 @@ export class TerminalViewPane extends ViewPane {
 		});
 	}
 
-	protected renderBody(container: HTMLElement): void {
+	protected renderBody(container?: HTMLElement): void {
+		if (!container) {
+			return;
+		}
 		super.renderBody(container);
 
 		this._parentDomElement = container;
 		this._parentDomElement.classList.add('integrated-terminal');
 		this._fontStyleElement = document.createElement('style');
 
-		this._terminalContainer = document.createElement('div');
-		this._terminalContainer.classList.add('terminal-outer-container');
-		this._terminalContainer.style.display = this.shouldShowWelcome() ? 'none' : 'block';
+		if (!this._terminalContainer) {
+			this._terminalContainer = document.createElement('div');
+			this._terminalContainer.classList.add('terminal-outer-container');
+			this._terminalContainer.style.display = this.shouldShowWelcome() ? 'none' : 'block';
+		}
+		this.updateTabContainer();
 
+		if (this._tabContainer) {
+			this._terminalContainer.appendChild(this._tabContainer);
+		}
 		this._findWidget = this._instantiationService.createInstance(TerminalFindWidget, this._terminalService.getFindState());
 		this._findWidget.focusTracker.onDidFocus(() => this._terminalContainer!.classList.add(FIND_FOCUS_CLASS));
-
 		this._parentDomElement.appendChild(this._fontStyleElement);
 		this._parentDomElement.appendChild(this._terminalContainer);
 		this._parentDomElement.appendChild(this._findWidget.getDomNode());
@@ -163,9 +172,40 @@ export class TerminalViewPane extends ViewPane {
 	protected layoutBody(height: number, width: number): void {
 		super.layoutBody(height, width);
 
-		this._bodyDimensions.width = width;
+		this._bodyDimensions.width = width * .8;
 		this._bodyDimensions.height = height;
 		this._terminalService.terminalTabs.forEach(t => t.layout(width, height));
+	}
+
+	public updateTabContainer(): void {
+		if (!this._tabContainer) {
+			this._tabContainer = document.createElement('span');
+			this._tabContainer.classList.add('tabs');
+		} else {
+			while (this._tabContainer.firstChild) {
+				this._tabContainer.removeChild(this._tabContainer.firstChild);
+			}
+		}
+		let tabs: HTMLDivElement[] = [];
+		for (const tab of this._terminalService.terminalTabs) {
+			let tabRow = document.createElement('div');
+			tabRow.classList.add('monaco-tl-row');
+			let indent = document.createElement('div');
+			indent.classList.add('monaco-tl-indent');
+			let tabItem = document.createElement('div');
+			tabItem.classList.add('monaco-tl-twistie', 'codicon', 'codicon-tree-item-expanded', 'collapsible', 'collapsed', 'tab-item');
+			tabItem.innerText = tab.terminalInstances.length === 1 ? tab.terminalInstances[0].title || `Terminals (1)` : `Terminals (${tab.terminalInstances.length})`;
+			indent.appendChild(tabItem);
+			tabRow.appendChild(indent);
+			tabs.push(tabRow);
+		}
+		for (let i = 0; i < tabs.length; i++) {
+			this._tabContainer?.appendChild(tabs[i]);
+		}
+	}
+
+	public renderBodyAgain(): void {
+		this.renderBody(this._parentDomElement);
 	}
 
 	public getActionViewItem(action: Action): IActionViewItem | undefined {

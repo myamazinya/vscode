@@ -3,6 +3,19 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+.monaco-workbench .tabs {
+	flex-direction: column;
+	position: static;
+	height: 100%;
+	width: 20%;
+	box-sizing: border-box;
+	float: left;
+}
+
+.tab-item {
+	padding-left: 30px;
+}
+
 .monaco-workbench .pane-body.integrated-terminal {
 	align-content: flex-start;
 	align-items: baseline;
@@ -23,6 +36,12 @@
 
 .monaco-workbench .pane-body.integrated-terminal .terminal-tab {
 	height: 100%;
+	width: 80%;
+	float:right;
+}
+
+.monaco-tl-indent {
+	width: 8px;
 }
 
 .monaco-workbench .pane-body.integrated-terminal .terminal-wrapper {
