@@ -35,7 +35,7 @@ function doGetMac(): Promise<string> {
 		try {
 			const ifaces = networkInterfaces();
 			for (const [, infos] of Object.entries(ifaces)) {
-				for (const info of infos) {
+				for (const info of infos!) {
 					if (validateMacAddress(info.mac)) {
 						return resolve(info.mac);
 					}
